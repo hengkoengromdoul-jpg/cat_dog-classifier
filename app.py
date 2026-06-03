@@ -1,5 +1,5 @@
 """
-Cat vs Dog Classifier — Streamlit web app
+Pawsense — A neural network that sees cats and dogs
 Mini Project 4 · Intro to Machine Learning
 Run with: streamlit run app.py
 """
@@ -14,182 +14,321 @@ import time
 #  PAGE CONFIG
 # ============================================================
 st.set_page_config(
-    page_title="Cat vs Dog Classifier",
-    page_icon="🐾",
-    layout="centered",
+    page_title="Pawsense · AI Vision",
+    page_icon="◐",
+    layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # ============================================================
-#  CLEAN, MINIMAL CSS
+#  CREATIVE CSS — premium "AI startup" aesthetic
 # ============================================================
 st.markdown("""
 <style>
-    /* Hide Streamlit chrome */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* Soft, neutral background */
+    /* Deep space background with subtle mesh gradient */
     .stApp {
-        background: #f8f9fa;
+        background:
+            radial-gradient(at 20% 20%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
+            radial-gradient(at 80% 30%, rgba(236, 72, 153, 0.18) 0px, transparent 50%),
+            radial-gradient(at 50% 90%, rgba(59, 130, 246, 0.18) 0px, transparent 50%),
+            #0a0b1e;
+        background-attachment: fixed;
     }
 
-    /* Typography */
     html, body, [class*="css"] {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        color: #2c3e50;
+        font-family: 'Inter', -apple-system, sans-serif;
+        color: #e2e8f0;
     }
 
-    /* Hero header */
+    /* === HERO === */
+    .hero {
+        text-align: center;
+        padding: 1.5rem 0 0.5rem 0;
+    }
+    .badge {
+        display: inline-block;
+        background: rgba(139, 92, 246, 0.15);
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        color: #c4b5fd;
+        padding: 0.35rem 0.9rem;
+        border-radius: 100px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
     .hero-title {
-        font-size: 2.4rem;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin: 0.5rem 0 0.25rem 0;
-        letter-spacing: -0.5px;
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0.3rem 0;
+        letter-spacing: -2px;
+        line-height: 1.1;
     }
     .hero-sub {
-        color: #6c757d;
-        font-size: 1.05rem;
-        margin-bottom: 2rem;
-        font-weight: 400;
-    }
-
-    /* Clean cards */
-    .card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        border: 1px solid #e9ecef;
-        margin-bottom: 1rem;
-    }
-    .card h3 {
-        margin-top: 0;
+        color: #94a3b8;
         font-size: 1.1rem;
-        font-weight: 600;
-        color: #1a1a1a;
+        font-weight: 400;
+        margin: 0.5rem 0 2rem 0;
+        max-width: 560px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
     }
 
-    /* Result cards — subtle, not loud */
-    .result {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-        border: 1px solid #e9ecef;
+    /* === GLASS CARDS === */
+    .card {
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 1.75rem;
         margin-bottom: 1rem;
+        transition: border-color 0.3s ease;
     }
-    .result-cat { border-top: 4px solid #e67e22; }
-    .result-dog { border-top: 4px solid #3498db; }
-    .result-unknown { border-top: 4px solid #95a5a6; }
+    .card:hover {
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+    .card h3, .card h4 {
+        color: #f1f5f9;
+        margin-top: 0;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+    }
+    .card-label {
+        font-size: 0.72rem;
+        color: #8b5cf6;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
 
+    /* === RESULT CARD === */
+    .result {
+        position: relative;
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        overflow: hidden;
+        animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .result::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 200px;
+        opacity: 0.18;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .result-cat::before {
+        background: radial-gradient(ellipse at top, #f97316 0%, transparent 70%);
+    }
+    .result-dog::before {
+        background: radial-gradient(ellipse at top, #3b82f6 0%, transparent 70%);
+    }
+    .result-unknown::before {
+        background: radial-gradient(ellipse at top, #64748b 0%, transparent 70%);
+    }
+    .result > * { position: relative; z-index: 1; }
+    .result-emoji {
+        font-size: 4rem;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));
+    }
     .result-label {
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0.3rem 0;
-        color: #1a1a1a;
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0.3rem 0 0.2rem 0;
+        letter-spacing: -1.5px;
+        color: #fff;
     }
-    .result-emoji { font-size: 3rem; line-height: 1; }
     .result-conf {
-        color: #6c757d;
+        color: #cbd5e1;
         font-size: 1rem;
-        margin-top: 0.3rem;
+        font-weight: 500;
+    }
+    .result-conf .num {
+        color: #fff;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Probability bars */
-    .bar-row {
+    @keyframes rise {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === PROBABILITY BARS === */
+    .prob-row {
         display: flex;
         align-items: center;
-        margin: 0.75rem 0;
-        gap: 0.75rem;
+        gap: 1rem;
+        margin: 0.85rem 0;
     }
-    .bar-label {
-        min-width: 60px;
+    .prob-name {
+        min-width: 50px;
         font-size: 0.9rem;
         font-weight: 500;
-        color: #495057;
+        color: #e2e8f0;
     }
-    .bar-track {
+    .prob-track {
         flex: 1;
-        background: #f1f3f5;
-        height: 8px;
-        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+        height: 6px;
+        border-radius: 999px;
         overflow: hidden;
     }
-    .bar-fill-cat { background: #e67e22; height: 100%; border-radius: 4px; }
-    .bar-fill-dog { background: #3498db; height: 100%; border-radius: 4px; }
-    .bar-value {
-        min-width: 50px;
+    .prob-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 0 12px currentColor;
+    }
+    .prob-fill-cat {
+        background: linear-gradient(90deg, #fb923c, #f97316);
+        color: #f97316;
+    }
+    .prob-fill-dog {
+        background: linear-gradient(90deg, #60a5fa, #3b82f6);
+        color: #3b82f6;
+    }
+    .prob-value {
+        min-width: 60px;
         text-align: right;
-        font-size: 0.9rem;
+        font-family: 'JetBrains Mono', monospace;
         font-weight: 600;
-        color: #1a1a1a;
-    }
-
-    /* Info note */
-    .note {
-        background: #f8f9fa;
-        border-left: 3px solid #adb5bd;
-        padding: 0.75rem 1rem;
-        border-radius: 4px;
-        color: #495057;
         font-size: 0.9rem;
-        margin-top: 1rem;
-        line-height: 1.5;
+        color: #fff;
     }
 
-    /* Sidebar — clean dark */
-    [data-testid="stSidebar"] {
-        background: #ffffff;
-        border-right: 1px solid #e9ecef;
-    }
-    [data-testid="stSidebar"] * {
-        color: #2c3e50 !important;
-    }
-    [data-testid="stSidebar"] h1 { font-size: 1.05rem !important; font-weight: 600 !important; }
-    [data-testid="stSidebar"] h2 { font-size: 0.95rem !important; font-weight: 600 !important; color: #495057 !important; margin-top: 1.5rem !important; }
-
-    /* Stat tags in sidebar */
-    .tag {
-        display: inline-block;
-        background: #f1f3f5;
-        color: #495057;
-        padding: 0.25rem 0.7rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        margin: 0.15rem 0.15rem 0.15rem 0;
-        font-weight: 500;
-    }
-
-    /* File uploader */
-    [data-testid="stFileUploader"] {
-        background: white;
-        border-radius: 8px;
-    }
-
-    /* Pipeline */
+    /* === PIPELINE === */
     .pipeline {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin: 1rem 0 0.5rem 0;
-        flex-wrap: wrap;
         gap: 0.4rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
     }
     .step {
-        background: #f1f3f5;
-        color: #495057;
-        border-radius: 8px;
-        padding: 0.5rem 0.8rem;
-        font-size: 0.85rem;
+        flex: 1;
+        min-width: 90px;
+        background: rgba(139, 92, 246, 0.08);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        color: #c4b5fd;
+        padding: 0.65rem 0.5rem;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 0.78rem;
         font-weight: 500;
-        flex-shrink: 0;
+    }
+    .step-icon {
+        font-size: 1.1rem;
+        margin-bottom: 0.2rem;
+        display: block;
     }
     .arrow {
-        color: #adb5bd;
-        font-size: 0.9rem;
+        color: rgba(139, 92, 246, 0.4);
+        font-weight: 700;
+        font-size: 1rem;
     }
+
+    /* === NOTE === */
+    .note {
+        background: rgba(139, 92, 246, 0.08);
+        border-left: 2px solid #8b5cf6;
+        padding: 0.85rem 1rem;
+        border-radius: 6px;
+        color: #cbd5e1;
+        font-size: 0.88rem;
+        margin-top: 1rem;
+        line-height: 1.55;
+    }
+
+    /* === SIDEBAR === */
+    [data-testid="stSidebar"] {
+        background: rgba(10, 11, 30, 0.92);
+        border-right: 1px solid rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(20px);
+    }
+    [data-testid="stSidebar"] * { color: #cbd5e1 !important; }
+    [data-testid="stSidebar"] h1 {
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+    }
+    [data-testid="stSidebar"] h2 {
+        font-size: 0.7rem !important;
+        font-weight: 600 !important;
+        color: #8b5cf6 !important;
+        letter-spacing: 1.5px !important;
+        text-transform: uppercase !important;
+        margin-top: 1.5rem !important;
+    }
+    [data-testid="stSidebar"] code, [data-testid="stSidebar"] pre {
+        background: rgba(139, 92, 246, 0.08) !important;
+        color: #c4b5fd !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+    }
+    .tag {
+        display: inline-block;
+        background: rgba(139, 92, 246, 0.12);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        color: #c4b5fd !important;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        margin: 0.15rem 0.15rem 0.15rem 0;
+        font-weight: 500;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* === UPLOADER === */
+    [data-testid="stFileUploader"] {
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 16px;
+        border: 1px dashed rgba(139, 92, 246, 0.4);
+    }
+    [data-testid="stFileUploader"] section {
+        background: transparent !important;
+        border: none !important;
+    }
+    [data-testid="stFileUploader"] button {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+    }
+
+    /* Streamlit captions */
+    [data-testid="stCaptionContainer"] { color: #64748b !important; }
+
+    /* Expander */
+    [data-testid="stExpander"] {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+    }
+    [data-testid="stExpander"] summary { color: #c4b5fd !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -224,78 +363,93 @@ except FileNotFoundError:
 #  SIDEBAR
 # ============================================================
 with st.sidebar:
-    st.markdown("# Cat vs Dog Classifier")
-    st.markdown("A simple neural network for image classification.")
+    st.markdown("# ◐ Pawsense")
+    st.markdown("<p style='color:#64748b; font-size:0.85rem; margin-top:-0.5rem;'>Neural network · v1.0</p>",
+                unsafe_allow_html=True)
 
-    st.markdown("## Model")
+    st.markdown("## Architecture")
     st.markdown("""
-3-layer fully-connected network, trained from scratch.
-
 ```
-Input  (4096)
+Input    4096
   ↓ ReLU
-Hidden (16)
+Hidden     16
   ↓ ReLU
-Hidden (8)
+Hidden      8
   ↓
-Output (2)
+Output      2
 ```
     """)
 
-    st.markdown("## Training")
+    st.markdown("## Dataset")
     st.markdown("""
 <div>
   <span class="tag">100 cats</span>
   <span class="tag">100 dogs</span>
   <span class="tag">64×64</span>
-  <span class="tag">Grayscale</span>
+  <span class="tag">grayscale</span>
   <span class="tag">80/20 split</span>
   <span class="tag">SGD</span>
 </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("## About")
+    st.markdown("## Notes")
     st.markdown("""
-This is a simple model trained on a small dataset. Predictions are not always correct — the model can be wrong even when it seems sure.
+<p style='font-size:0.85rem; color:#94a3b8; line-height:1.6;'>
+Trained from scratch on a small dataset. Predictions can be wrong even when the model is confident — this is a known limitation of simple networks trained on limited data.
+</p>
+    """, unsafe_allow_html=True)
 
-Mini Project 4
-Intro to Machine Learning
-    """)
+    st.markdown("## Project")
+    st.markdown("""
+<p style='font-size:0.78rem; color:#64748b;'>
+Mini Project 4<br/>
+Intro to Machine Learning<br/>
+Year 3 ITC · I3 AMS S2
+</p>
+    """, unsafe_allow_html=True)
 
 # ============================================================
-#  MAIN PAGE
+#  HERO
 # ============================================================
-st.markdown('<h1 class="hero-title">Cat vs Dog Classifier</h1>', unsafe_allow_html=True)
-st.markdown('<p class="hero-sub">Upload a photo and see what the model predicts.</p>',
-            unsafe_allow_html=True)
+st.markdown("""
+<div class="hero">
+    <div class="badge">◐ AI VISION DEMO</div>
+    <h1 class="hero-title">See like a network.</h1>
+    <p class="hero-sub">A neural network trained from scratch to distinguish cats from dogs. Upload a photo and watch the model reason — pixel by pixel, layer by layer.</p>
+</div>
+""", unsafe_allow_html=True)
 
 if not model_ok:
-    st.error("Model files not found. Please make sure `model_weights.pt` and `scaler.pkl` are in the same folder as this app.")
+    st.error("Model files not found. Make sure `model_weights.pt` and `scaler.pkl` are next to this app.")
     st.stop()
 
-# ----- Pipeline -----
+# ============================================================
+#  PIPELINE
+# ============================================================
 st.markdown("""
 <div class="card">
-  <h3>How it works</h3>
+  <div class="card-label">Pipeline</div>
+  <h3 style="margin-bottom:1rem;">How the model sees your photo</h3>
   <div class="pipeline">
-    <div class="step">Photo</div>
+    <div class="step"><span class="step-icon">📷</span>Input</div>
     <span class="arrow">→</span>
-    <div class="step">Grayscale</div>
+    <div class="step"><span class="step-icon">◐</span>Grayscale</div>
     <span class="arrow">→</span>
-    <div class="step">Resize 64×64</div>
+    <div class="step"><span class="step-icon">▦</span>64×64</div>
     <span class="arrow">→</span>
-    <div class="step">Flatten</div>
+    <div class="step"><span class="step-icon">∥</span>Flatten</div>
     <span class="arrow">→</span>
-    <div class="step">Neural network</div>
+    <div class="step"><span class="step-icon">⌘</span>Network</div>
     <span class="arrow">→</span>
-    <div class="step">Prediction</div>
+    <div class="step"><span class="step-icon">✦</span>Prediction</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ----- Upload -----
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown("### Upload a photo")
+# ============================================================
+#  UPLOAD
+# ============================================================
+st.markdown('<div class="card"><div class="card-label">Upload</div><h3>Choose a photo</h3>', unsafe_allow_html=True)
 uploaded = st.file_uploader("upload", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -307,8 +461,8 @@ if uploaded is not None:
     if img_color is None or img_gray is None:
         st.error("Couldn't read that file. Please try another image.")
     else:
-        with st.spinner("Analyzing..."):
-            time.sleep(0.4)
+        with st.spinner("Running inference..."):
+            time.sleep(0.5)
             img_resized = cv.resize(img_gray, (64, 64))
             x = img_resized.flatten() / 255.0
             x = scaler.transform(x.reshape(1, -1))
@@ -330,67 +484,67 @@ if uploaded is not None:
 
         with col1:
             st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown("### Your photo")
+            st.markdown('<div class="card-label">Input</div>', unsafe_allow_html=True)
+            st.markdown('<h3>Your photo</h3>', unsafe_allow_html=True)
             st.image(cv.cvtColor(img_color, cv.COLOR_BGR2RGB), use_container_width=True)
-            st.caption(f"{img_color.shape[1]} × {img_color.shape[0]} pixels")
+            st.caption(f"Original · {img_color.shape[1]} × {img_color.shape[0]} px")
 
-            with st.expander("What the model actually sees"):
-                st.image(img_resized, width=160, clamp=True)
-                st.caption("The photo is reduced to a 64×64 grayscale image before being passed to the network.")
+            with st.expander("◐ What the network actually sees"):
+                st.image(img_resized, width=180, clamp=True)
+                st.caption("Reduced to 64×64 grayscale — 4,096 pixel values.")
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
+            # Result card
             if is_unknown:
-                st.markdown(f"""
-                <div class="result result-unknown">
-                    <div class="result-emoji">🤔</div>
-                    <div class="result-label">Not Sure</div>
-                    <div class="result-conf">This doesn't appear to be a cat or a dog</div>
-                </div>
-                """, unsafe_allow_html=True)
+                emoji, label, cls = "◯", "Unknown", "result-unknown"
+                subtext = "This doesn't appear to be a cat or a dog"
             elif pred == 0:
-                st.markdown(f"""
-                <div class="result result-cat">
-                    <div class="result-emoji">🐱</div>
-                    <div class="result-label">Cat</div>
-                    <div class="result-conf">{confidence:.1f}% confidence</div>
-                </div>
-                """, unsafe_allow_html=True)
+                emoji, label, cls = "🐱", "Cat", "result-cat"
+                subtext = f'Confidence · <span class="num">{confidence:.1f}%</span>'
             else:
-                st.markdown(f"""
-                <div class="result result-dog">
-                    <div class="result-emoji">🐶</div>
-                    <div class="result-label">Dog</div>
-                    <div class="result-conf">{confidence:.1f}% confidence</div>
-                </div>
-                """, unsafe_allow_html=True)
+                emoji, label, cls = "🐶", "Dog", "result-dog"
+                subtext = f'Confidence · <span class="num">{confidence:.1f}%</span>'
 
-            # Probability bars
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown("**Probabilities**")
             st.markdown(f"""
-            <div class="bar-row">
-                <div class="bar-label">Cat</div>
-                <div class="bar-track"><div class="bar-fill-cat" style="width:{cat_p}%;"></div></div>
-                <div class="bar-value">{cat_p:.1f}%</div>
+            <div class="result {cls}">
+                <div class="card-label">Prediction</div>
+                <div class="result-emoji">{emoji}</div>
+                <div class="result-label">{label}</div>
+                <div class="result-conf">{subtext}</div>
             </div>
-            <div class="bar-row">
-                <div class="bar-label">Dog</div>
-                <div class="bar-track"><div class="bar-fill-dog" style="width:{dog_p}%;"></div></div>
-                <div class="bar-value">{dog_p:.1f}%</div>
+            """, unsafe_allow_html=True)
+
+            # Probabilities
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            st.markdown('<div class="card-label">Distribution</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="prob-row">
+                <div class="prob-name">Cat</div>
+                <div class="prob-track">
+                    <div class="prob-fill prob-fill-cat" style="width:{cat_p}%;"></div>
+                </div>
+                <div class="prob-value">{cat_p:.1f}%</div>
+            </div>
+            <div class="prob-row">
+                <div class="prob-name">Dog</div>
+                <div class="prob-track">
+                    <div class="prob-fill prob-fill-dog" style="width:{dog_p}%;"></div>
+                </div>
+                <div class="prob-value">{dog_p:.1f}%</div>
             </div>
             """, unsafe_allow_html=True)
 
             if is_unknown:
                 st.markdown("""
                 <div class="note">
-                    The model only knows two categories — cat and dog. When the probabilities are close to 50/50, it usually means the photo is something else.
+                    The model knows only two classes — cat and dog. When probabilities settle close to 50/50, the photo is likely neither.
                 </div>
                 """, unsafe_allow_html=True)
             elif confidence >= 80:
                 st.markdown("""
                 <div class="note">
-                    High confidence does not always mean correct. This model can occasionally be confidently wrong.
+                    High confidence ≠ correct. Simple networks can be confidently wrong on out-of-sample data.
                 </div>
                 """, unsafe_allow_html=True)
 
