@@ -55,7 +55,7 @@ st.markdown("""
         display: inline-block;
         background: rgba(139, 92, 246, 0.15);
         border: 1px solid rgba(139, 92, 246, 0.4);
-        color: #c4b5fd;
+        color: #b5defd;
         padding: 0.35rem 0.9rem;
         border-radius: 100px;
         font-size: 0.78rem;
@@ -67,7 +67,7 @@ st.markdown("""
     .hero-title {
         font-size: 3.5rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+        background: linear-gradient(135deg, #fff 0%, #3c45e8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
