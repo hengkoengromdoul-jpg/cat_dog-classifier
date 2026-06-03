@@ -31,13 +31,9 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* Deep space background with subtle mesh gradient */
+    /* New Premium Linear Gradient Background */
     .stApp {
-        background:
-            radial-gradient(at 20% 20%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
-            radial-gradient(at 80% 30%, rgba(236, 72, 153, 0.18) 0px, transparent 50%),
-            radial-gradient(at 50% 90%, rgba(59, 130, 246, 0.18) 0px, transparent 50%),
-            #0a0b1e;
+        background: linear-gradient(135deg, #111827 0%, #030712 100%);
         background-attachment: fixed;
     }
 
@@ -263,7 +259,7 @@ st.markdown("""
 
     /* === SIDEBAR === */
     [data-testid="stSidebar"] {
-        background: rgba(10, 11, 30, 0.92);
+        background: rgba(15, 23, 42, 0.95);
         border-right: 1px solid rgba(255, 255, 255, 0.06);
         backdrop-filter: blur(20px);
     }
@@ -332,119 +328,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================================
-#  MODEL
-# ============================================================
-def my_ANN(X, W1, b1, W2, b2, W3, b3):
-    Z1 = torch.matmul(X, W1) + b1
-    A1 = torch.relu(Z1)
-    Z2 = torch.matmul(A1, W2) + b2
-    A2 = torch.relu(Z2)
-    Z3 = torch.matmul(A2, W3) + b3
-    return Z3
-
-@st.cache_resource
-def load_model():
-    weights = torch.load("model_weights.pt", map_location="cpu")
-    with open("scaler.pkl", "rb") as f:
-        scaler = pickle.load(f)
-    return weights, scaler
-
-try:
-    weights, scaler = load_model()
-    W1, b1 = weights["W1"], weights["b1"]
-    W2, b2 = weights["W2"], weights["b2"]
-    W3, b3 = weights["W3"], weights["b3"]
-    model_ok = True
-except FileNotFoundError:
-    model_ok = False
-
-# ============================================================
-#  SIDEBAR
-# ============================================================
-with st.sidebar:
-    st.markdown("# ◐ Pawsense")
-    st.markdown("<p style='color:#64748b; font-size:0.85rem; margin-top:-0.5rem;'>Neural network · v1.0</p>",
-                unsafe_allow_html=True)
-
-    st.markdown("## Architecture")
-    st.markdown("""
-```
-Input    4096
-  ↓ ReLU
-Hidden     16
-  ↓ ReLU
-Hidden      8
-  ↓
-Output      2
-```
-    """)
-
-    st.markdown("## Dataset")
-    st.markdown("""
-<div>
-  <span class="tag">100 cats</span>
-  <span class="tag">100 dogs</span>
-  <span class="tag">64×64</span>
-  <span class="tag">grayscale</span>
-  <span class="tag">80/20 split</span>
-  <span class="tag">SGD</span>
-</div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("## Notes")
-    st.markdown("""
-<p style='font-size:0.85rem; color:#94a3b8; line-height:1.6;'>
-Trained from scratch on a small dataset. Predictions can be wrong even when the model is confident — this is a known limitation of simple networks trained on limited data.
-</p>
-    """, unsafe_allow_html=True)
-
-    st.markdown("## Project")
-    st.markdown("""
-<p style='font-size:0.78rem; color:#64748b;'>
-Mini Project 4<br/>
-Intro to Machine Learning<br/>
-Year 3 ITC · I3 AMS S2
-</p>
-    """, unsafe_allow_html=True)
-
-# ============================================================
-#  HERO
-# ============================================================
-st.markdown("""
-<div class="hero">
-    <div class="badge">◐ AI VISION DEMO</div>
-    <h1 class="hero-title">See like a network.</h1>
-    <p class="hero-sub">A neural network trained from scratch to distinguish cats from dogs. Upload a photo and watch the model reason — pixel by pixel, layer by layer.</p>
-</div>
-""", unsafe_allow_html=True)
-
-if not model_ok:
-    st.error("Model files not found. Make sure `model_weights.pt` and `scaler.pkl` are next to this app.")
-    st.stop()
-
-# ============================================================
-#  PIPELINE
-# ============================================================
-st.markdown("""
-<div class="card">
-  <div class="card-label">Pipeline</div>
-  <h3 style="margin-bottom:1rem;">How the model sees your photo</h3>
-  <div class="pipeline">
-    <div class="step"><span class="step-icon">📷</span>Input</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="step-icon">◐</span>Grayscale</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="step-icon">▦</span>64×64</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="step-icon">∥</span>Flatten</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="step-icon">⌘</span>Network</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="step-icon">✦</span>Prediction</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+# Add the rest of your app's logic, models, and layout setup below...
 
 # ============================================================
 #  UPLOAD
