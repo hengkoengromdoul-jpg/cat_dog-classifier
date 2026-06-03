@@ -37,7 +37,7 @@ st.markdown("""
             radial-gradient(at 20% 20%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
             radial-gradient(at 80% 30%, rgba(236, 72, 153, 0.18) 0px, transparent 50%),
             radial-gradient(at 50% 90%, rgba(59, 130, 246, 0.18) 0px, transparent 50%),
-            #aad3f2;
+            #0561a6;
         background-attachment: fixed;
     }
 
