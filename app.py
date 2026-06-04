@@ -449,6 +449,18 @@ st.markdown("""
 # ============================================================
 #  UPLOAD
 # ============================================================
+st.markdown("""
+<div class="card" style="border-left: 3px solid #8b5cf6;">
+  <div style="display:flex; gap:0.8rem; align-items:flex-start;">
+    <div style="font-size:1.3rem;">💡</div>
+    <div style="font-size:0.92rem; color:#cbd5e1; line-height:1.55;">
+      <b style="color:#fff;">For best results, upload a photo of a cat or a dog.</b><br/>
+      This model was trained on only those two animals — it will always pick one of them, even if the photo is of something else. That's a known limitation of simple classifiers.
+    </div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
 st.markdown('<div class="card"><div class="card-label">Upload</div><h3>Choose a photo</h3>', unsafe_allow_html=True)
 uploaded = st.file_uploader("upload", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
@@ -477,27 +489,6 @@ if uploaded is not None:
             dog_p = probs[0, 1].item() * 100
             confidence = max(cat_p, dog_p)
 
-            # ----- Out-of-distribution detection -----
-            # Three signals that a photo is NOT a cat or dog:
-            #   1. Low softmax confidence (close to 50/50)
-            #   2. Small logit margin (the network can't decide between the two)
-            #   3. Both raw logits are small (network is not strongly activated)
-            cat_logit = Z[0, 0].item()
-            dog_logit = Z[0, 1].item()
-            logit_margin = abs(cat_logit - dog_logit)
-            max_logit = max(cat_logit, dog_logit)
-
-            # Tune these if needed:
-            CONFIDENCE_THRESHOLD = 70.0   # require >70% softmax confidence
-            LOGIT_MARGIN_MIN = 1.5         # winning logit must beat the other by 1.5+
-            MAX_LOGIT_MIN = 0.5            # winning logit must itself be > 0.5
-
-        is_unknown = (
-            confidence < CONFIDENCE_THRESHOLD
-            or logit_margin < LOGIT_MARGIN_MIN
-            or max_logit < MAX_LOGIT_MIN
-        )
-
         col1, col2 = st.columns([1, 1], gap="medium")
 
         with col1:
@@ -513,23 +504,18 @@ if uploaded is not None:
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
-            # Result card
-            if is_unknown:
-                emoji, label, cls = "◯", "Unknown", "result-unknown"
-                subtext = "This doesn't appear to be a cat or a dog"
-            elif pred == 0:
+            # Result card — Cat or Dog only
+            if pred == 0:
                 emoji, label, cls = "🐱", "Cat", "result-cat"
-                subtext = f'Confidence · <span class="num">{confidence:.1f}%</span>'
             else:
                 emoji, label, cls = "🐶", "Dog", "result-dog"
-                subtext = f'Confidence · <span class="num">{confidence:.1f}%</span>'
 
             st.markdown(f"""
             <div class="result {cls}">
                 <div class="card-label">Prediction</div>
                 <div class="result-emoji">{emoji}</div>
                 <div class="result-label">{label}</div>
-                <div class="result-conf">{subtext}</div>
+                <div class="result-conf">Confidence · <span class="num">{confidence:.1f}%</span></div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -553,17 +539,10 @@ if uploaded is not None:
             </div>
             """, unsafe_allow_html=True)
 
-            if is_unknown:
-                st.markdown("""
-                <div class="note">
-                    The model knows only two classes — cat and dog. When probabilities settle close to 50/50, the photo is likely neither.
-                </div>
-                """, unsafe_allow_html=True)
-            elif confidence >= 80:
-                st.markdown("""
-                <div class="note">
-                    High confidence ≠ correct. Simple networks can be confidently wrong on out-of-sample data.
-                </div>
-                """, unsafe_allow_html=True)
+            st.markdown("""
+            <div class="note">
+                This model was trained only on cats and dogs. It will always pick one — even for unrelated photos. High confidence does not always mean correct.
+            </div>
+            """, unsafe_allow_html=True)
 
             st.markdown('</div>', unsafe_allow_html=True)
