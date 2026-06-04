@@ -37,7 +37,7 @@ st.markdown("""
             radial-gradient(at 20% 20%, rgba(139, 92, 246, 0.25) 0px, transparent 50%),
             radial-gradient(at 80% 30%, rgba(236, 72, 153, 0.18) 0px, transparent 50%),
             radial-gradient(at 50% 90%, rgba(59, 130, 246, 0.18) 0px, transparent 50%),
-            #1e293b;
+            #0a0b1e;
         background-attachment: fixed;
     }
 
@@ -477,8 +477,26 @@ if uploaded is not None:
             dog_p = probs[0, 1].item() * 100
             confidence = max(cat_p, dog_p)
 
-        UNKNOWN_THRESHOLD = 60.0
-        is_unknown = confidence < UNKNOWN_THRESHOLD
+            # ----- Out-of-distribution detection -----
+            # Three signals that a photo is NOT a cat or dog:
+            #   1. Low softmax confidence (close to 50/50)
+            #   2. Small logit margin (the network can't decide between the two)
+            #   3. Both raw logits are small (network is not strongly activated)
+            cat_logit = Z[0, 0].item()
+            dog_logit = Z[0, 1].item()
+            logit_margin = abs(cat_logit - dog_logit)
+            max_logit = max(cat_logit, dog_logit)
+
+            # Tune these if needed:
+            CONFIDENCE_THRESHOLD = 70.0   # require >70% softmax confidence
+            LOGIT_MARGIN_MIN = 1.5         # winning logit must beat the other by 1.5+
+            MAX_LOGIT_MIN = 0.5            # winning logit must itself be > 0.5
+
+        is_unknown = (
+            confidence < CONFIDENCE_THRESHOLD
+            or logit_margin < LOGIT_MARGIN_MIN
+            or max_logit < MAX_LOGIT_MIN
+        )
 
         col1, col2 = st.columns([1, 1], gap="medium")
 
