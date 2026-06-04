@@ -475,14 +475,13 @@ if uploaded is not None:
     else:
         # ============================================================
         #  PRE-CHECK: detect obvious screenshots/documents/graphics
-        #  before running the model. Conservative thresholds — better
-        #  to let some non-photos through than to reject real photos.
         # ============================================================
         h, w = img_gray.shape
         aspect = w / h
 
-        # Check 1: extreme aspect ratios (monitor widescreen, banner shapes)
-        aspect_suspicious = aspect > 2.0 or aspect < 0.45
+        # Check 1: monitor screenshot aspect ratios (16:9 = 1.78, 16:10 = 1.6, ultrawide = 2.0+)
+        # Phone photos are 3:4 = 0.75 or 4:3 = 1.33; rare to be wider than 1.5
+        aspect_suspicious = aspect > 1.5 or aspect < 0.45
 
         # Check 2: extremely flat images (pure documents, blank UI)
         edges = cv.Canny(img_gray, 100, 200)
