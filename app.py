@@ -473,6 +473,69 @@ if uploaded is not None:
     if img_color is None or img_gray is None:
         st.error("Couldn't read that file. Please try another image.")
     else:
+        # ============================================================
+        #  PRE-CHECK: detect obvious screenshots/documents/graphics
+        #  before running the model. This is heuristic — it cannot
+        #  catch everything, but it does catch most non-photo content.
+        # ============================================================
+        h, w = img_gray.shape
+        aspect = w / h
+
+        # Check 1: monitor aspect ratio (16:9, 16:10) is rare in phone photos
+        aspect_suspicious = aspect > 1.7 or aspect < 0.55
+
+        # Check 2: very low edge density = mostly flat = likely document/UI
+        edges = cv.Canny(img_gray, 100, 200)
+        edge_density = edges.sum() / (h * w * 255)
+        too_flat = edge_density < 0.025
+
+        # Check 3: large uniform regions (typical of screenshots and graphics)
+        small = cv.resize(img_gray, (16, 16))
+        uniform_score = (
+            (np.abs(np.diff(small.astype(int), axis=0)) < 5).mean() +
+            (np.abs(np.diff(small.astype(int), axis=1)) < 5).mean()
+        )
+        too_uniform = uniform_score > 1.0
+
+        likely_not_animal = aspect_suspicious or too_flat or too_uniform
+
+        if likely_not_animal:
+            reasons = []
+            if aspect_suspicious: reasons.append(f"unusual proportions ({w}×{h})")
+            if too_flat:          reasons.append("not enough photo-like detail")
+            if too_uniform:       reasons.append("too many flat regions")
+
+            col1, col2 = st.columns([1, 1], gap="medium")
+            with col1:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+                st.markdown('<div class="card-label">Rejected input</div>', unsafe_allow_html=True)
+                st.markdown('<h3>Your image</h3>', unsafe_allow_html=True)
+                st.image(cv.cvtColor(img_color, cv.COLOR_BGR2RGB), use_container_width=True)
+                st.caption(f"{w} × {h} pixels")
+                st.markdown('</div>', unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"""
+                <div class="result result-unknown">
+                    <div class="card-label">Result</div>
+                    <div class="result-emoji">🚫</div>
+                    <div class="result-label" style="font-size:1.8rem;">Image cannot be read</div>
+                    <div class="result-conf">This doesn't look like an animal photo</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Why this was rejected</div>
+                    <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.6;">
+                    {', '.join(reasons).capitalize()}.
+                    </p>
+                    <p style="color:#94a3b8; font-size:0.85rem; line-height:1.6; margin-top:0.5rem;">
+                    Please upload a normal photo of a cat or a dog. Screenshots, documents, and graphics will not be analyzed.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            st.stop()
+
+        # ============================================================
+        #  Photo passed the pre-check — run the model
+        # ============================================================
         with st.spinner("Running inference..."):
             time.sleep(0.5)
             img_resized = cv.resize(img_gray, (64, 64))
