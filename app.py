@@ -475,27 +475,27 @@ if uploaded is not None:
     else:
         # ============================================================
         #  PRE-CHECK: detect obvious screenshots/documents/graphics
-        #  before running the model. This is heuristic — it cannot
-        #  catch everything, but it does catch most non-photo content.
+        #  before running the model. Conservative thresholds — better
+        #  to let some non-photos through than to reject real photos.
         # ============================================================
         h, w = img_gray.shape
         aspect = w / h
 
-        # Check 1: monitor aspect ratio (16:9, 16:10) is rare in phone photos
-        aspect_suspicious = aspect > 1.7 or aspect < 0.55
+        # Check 1: extreme aspect ratios (monitor widescreen, banner shapes)
+        aspect_suspicious = aspect > 2.0 or aspect < 0.45
 
-        # Check 2: very low edge density = mostly flat = likely document/UI
+        # Check 2: extremely flat images (pure documents, blank UI)
         edges = cv.Canny(img_gray, 100, 200)
         edge_density = edges.sum() / (h * w * 255)
-        too_flat = edge_density < 0.025
+        too_flat = edge_density < 0.008
 
-        # Check 3: large uniform regions (typical of screenshots and graphics)
+        # Check 3: extremely uniform (huge solid color blocks like UI)
         small = cv.resize(img_gray, (16, 16))
         uniform_score = (
             (np.abs(np.diff(small.astype(int), axis=0)) < 5).mean() +
             (np.abs(np.diff(small.astype(int), axis=1)) < 5).mean()
         )
-        too_uniform = uniform_score > 1.0
+        too_uniform = uniform_score > 1.5
 
         likely_not_animal = aspect_suspicious or too_flat or too_uniform
 
